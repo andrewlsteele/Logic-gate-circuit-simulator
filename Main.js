@@ -11,7 +11,7 @@ p5.disableFriendlyErrors = true; // Disables friendly error system feature of p5
 
 // Variables:
 const boxWidth = 30;
-let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutput, imgANDGate, imgORGate, imgNOTGate, sideComponents, movingIndex, movingOffsetX, movingOffsetY;
+let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutputOn, imgOutputOff, imgANDGate, imgORGate, imgNOTGate, sideComponents, movingIndex, movingOffsetX, movingOffsetY;
 let mainComponents = [];
 
 // Side component class:
@@ -85,10 +85,11 @@ function preload() {
     // Will load graphics for side components
     imgSwitchOn = loadImage('assets/switch_on.png');
     imgSwitchOff = loadImage('assets/switch_off.png');
-    imgOutput = loadImage('assets/switch_on.png');
-    imgANDGate = loadImage('assets/switch_on.png');
-    imgORGate = loadImage('assets/switch_on.png');
-    imgNOTGate = loadImage('assets/switch_on.png');
+    imgOutputOn = loadImage('assets/output_on.png');
+    imgOutputOff = loadImage('assets/output_off.png')
+    imgANDGate = loadImage('assets/ANDgate.png');
+    imgORGate = loadImage('assets/ORgate.png');
+    imgNOTGate = loadImage('assets/NOTgate.png');
 }
 
 // P5 defined function. Called once after preload() is finished
@@ -98,8 +99,8 @@ function setup() {
     sideBoardWidth = windowWidth / 5;
 
     sideComponents = [
-        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 5, boxWidth*2, boxWidth*2, "switch", imgSwitchOn),
-        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 10+boxWidth*2, boxWidth*2, boxWidth*2, "output", imgOutput),
+        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 5, boxWidth*2, boxWidth*2, "switch", imgSwitchOff),
+        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 10+boxWidth*2, boxWidth*2, boxWidth*2, "output", imgOutputOff),
         new SideComponent((sideBoardWidth-(boxWidth*4))/2, 15+2*(boxWidth*2), boxWidth*4, boxWidth*4, "ANDgate", imgANDGate),
         new SideComponent((sideBoardWidth-(boxWidth*4))/2, 20+2*(boxWidth*2)+boxWidth*4, boxWidth*4, boxWidth*4, "ORgate", imgORGate),
         new SideComponent((sideBoardWidth-(boxWidth*2))/2, 25+2*(boxWidth*2)+2*(boxWidth*4), boxWidth*2, boxWidth*2, "NOTgate", imgNOTGate)
@@ -191,7 +192,7 @@ function mousePressed() {
 // P5 defined function, called once when mouse is released
 function mouseReleased() {
     // If a component is being moved and the x-coordinate is less than the side board's boundary, remove the item from the list.
-    if (movingIndex > -1 && mouseX < sideBoardWidth) {
+    if (movingIndex > -1 && mainComponents[movingIndex].x < sideBoardWidth) {
         mainComponents.splice(movingIndex, 1);
     }
 
