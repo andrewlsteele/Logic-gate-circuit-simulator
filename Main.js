@@ -10,8 +10,8 @@ p5.disableFriendlyErrors = true; // Disables friendly error system feature of p5
 
 
 // Variables:
-const boxWidth = 50;
-let sideBoardWidth, imgSwitch, imgOutput, imgANDGate, imgORGate, imgNOTGate, sideComponents, movingIndex;
+const boxWidth = 30;
+let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutput, imgANDGate, imgORGate, imgNOTGate, sideComponents, movingIndex, movingOffsetX, movingOffsetY;
 let mainComponents = [];
 
 // Side component class:
@@ -83,7 +83,8 @@ class MainComponent extends SideComponent {
 // P5 defined function. Called once directly before setup(), setup() will wait for everything in this function to finish loading
 function preload() {
     // Will load graphics for side components
-    imgSwitch = loadImage('assets/switch_on.png');
+    imgSwitchOn = loadImage('assets/switch_on.png');
+    imgSwitchOff = loadImage('assets/switch_off.png');
     imgOutput = loadImage('assets/switch_on.png');
     imgANDGate = loadImage('assets/switch_on.png');
     imgORGate = loadImage('assets/switch_on.png');
@@ -97,7 +98,7 @@ function setup() {
     sideBoardWidth = windowWidth / 5;
 
     sideComponents = [
-        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 5, boxWidth*2, boxWidth*2, "switch", imgSwitch),
+        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 5, boxWidth*2, boxWidth*2, "switch", imgSwitchOn),
         new SideComponent((sideBoardWidth-(boxWidth*2))/2, 10+boxWidth*2, boxWidth*2, boxWidth*2, "output", imgOutput),
         new SideComponent((sideBoardWidth-(boxWidth*4))/2, 15+2*(boxWidth*2), boxWidth*4, boxWidth*4, "ANDgate", imgANDGate),
         new SideComponent((sideBoardWidth-(boxWidth*4))/2, 20+2*(boxWidth*2)+boxWidth*4, boxWidth*4, boxWidth*4, "ORgate", imgORGate),
@@ -112,11 +113,11 @@ function windowResized() {
     for (let component of sideComponents) {
         component.x = ((sideBoardWidth-(component.getWidth))/2);
     }
-    clear();
 }
 
 // P5 defined function. Called once every frame.
 function draw() {
+    clear();
     strokeWeight(5);
     line(sideBoardWidth, 0, sideBoardWidth, windowHeight); // Creates a line from top to bottom a fifth along - line(x1, y1, x2, y2);
     strokeWeight(1);
@@ -133,29 +134,66 @@ function draw() {
     }
     if (mainComponents.length >= 1) {
         for (let component of mainComponents) {
+            // Changes the coordinates of the component to the cursor's coordinates if the component is being moved
+            if (mainComponents.indexOf(component) == movingIndex) {
+                // Locks the coordinates of the component to the coordinates of the grid
+                if ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth < boxWidth/2) {
+                    component.x = mouseX - movingOffsetX - ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth);
+                } else {
+                    component.x = mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth);
+                }
+
+                if ((mouseY - movingOffsetY) % boxWidth < boxWidth/2) {
+                    component.y = mouseY - movingOffsetY - ((mouseY - movingOffsetY) % boxWidth);
+                } else {
+                    component.y = mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY) % boxWidth);
+                }
+                
+            }
             image(component.getImage, component.getX, component.getY, component.getWidth, component.getHeight);
         }
     }
 }
 
+// P5 defined function, called once when mouse is pressed
 function mousePressed() {
     for (let component of sideComponents) {
-        // If the mouse cursor is on top of a component
+        // If the mouse cursor is on top of a side component
         if (mouseX >= component.getX && mouseX <= component.getX + component.getWidth && mouseY >= component.getY && mouseY <= component.getY + component.getHeight) {
             // Creates a new main component in a list containing all main components
-            mainComponents.push(new MainComponent(mouseX, mouseY, component.getWidth, component.getHeight, component.getType, component.getImage, false));
+            mainComponents.push(new MainComponent(component.getX, component.getY, component.getWidth, component.getHeight, component.getType, component.getImage, true));
         }
     }
-
+    // Loops through all main components to find out which, if any, is being clicked on
     if (mainComponents.length >= 1) {
         for (let component of mainComponents) {
+
             if (mouseX >= component.getX && mouseX <= component.getX + component.getWidth && mouseY >= component.getY && mouseY <= component.getY + component.getHeight) {
+                movingOffsetX = mouseX - component.getX;
+                movingOffsetY = mouseY - component.getY;
                 movingIndex = mainComponents.indexOf(component);
+
+                if (component.getType == "switch") {
+                    if (component.getState == true) {
+                        component.state = false;
+                        component.image = imgSwitchOff;
+                    } else {
+                        component.state = true;
+                        component.image = imgSwitchOn;
+                    }
+                    console.log("Changed state");
+                }
             }
         }
     }
 }
 
+// P5 defined function, called once when mouse is released
 function mouseReleased() {
+    // If a component is being moved and the x-coordinate is less than the side board's boundary, remove the item from the list.
+    if (movingIndex > -1 && mouseX < sideBoardWidth) {
+        mainComponents.splice(movingIndex, 1);
+    }
+
     movingIndex = -1;
 }
