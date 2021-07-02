@@ -11,7 +11,8 @@ p5.disableFriendlyErrors = true; // Disables friendly error system feature of p5
 
 // Variables:
 const boxWidth = 50;
-let sideBoardWidth, imgSwitch, imgOutput, imgANDGate, imgORGate, imgNOTGate, sideComponents;
+let sideBoardWidth, imgSwitch, imgOutput, imgANDGate, imgORGate, imgNOTGate, sideComponents, movingIndex;
+let mainComponents = [];
 
 // Side component class:
 class SideComponent {
@@ -63,6 +64,22 @@ class SideComponent {
     }
 }
 
+class MainComponent extends SideComponent {
+    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenState) {
+        super(givenX, givenY, givenWidth, givenHeight, givenType, givenImage);
+        this.state = givenState;
+    }
+
+    get getState() {
+        return this.state;
+    }
+
+    set setState(givenState) {
+        this.state = givenState;
+    }
+}
+
+
 // P5 defined function. Called once directly before setup(), setup() will wait for everything in this function to finish loading
 function preload() {
     // Will load graphics for side components
@@ -110,7 +127,35 @@ function draw() {
         line(sideBoardWidth, i*boxWidth, windowWidth, i*boxWidth);
     }
 
+    // Draws the components
     for (let component of sideComponents) {
         image(component.getImage, component.getX, component.getY, component.getWidth, component.getHeight);
     }
+    if (mainComponents.length >= 1) {
+        for (let component of mainComponents) {
+            image(component.getImage, component.getX, component.getY, component.getWidth, component.getHeight);
+        }
+    }
+}
+
+function mousePressed() {
+    for (let component of sideComponents) {
+        // If the mouse cursor is on top of a component
+        if (mouseX >= component.getX && mouseX <= component.getX + component.getWidth && mouseY >= component.getY && mouseY <= component.getY + component.getHeight) {
+            // Creates a new main component in a list containing all main components
+            mainComponents.push(new MainComponent(mouseX, mouseY, component.getWidth, component.getHeight, component.getType, component.getImage, false));
+        }
+    }
+
+    if (mainComponents.length >= 1) {
+        for (let component of mainComponents) {
+            if (mouseX >= component.getX && mouseX <= component.getX + component.getWidth && mouseY >= component.getY && mouseY <= component.getY + component.getHeight) {
+                movingIndex = mainComponents.indexOf(component);
+            }
+        }
+    }
+}
+
+function mouseReleased() {
+    movingIndex = -1;
 }
