@@ -10,8 +10,8 @@ p5.disableFriendlyErrors = true; // Disables friendly error system feature of p5
 
 
 // Variables:
-const boxWidth = 30;
-const nodeRadius = 30 * (boxWidth / 100);
+let boxWidth = 30;
+let nodeRadius = 30 * (boxWidth / 100);
 
 let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutputOn, imgOutputOff, imgANDGate, imgORGate, imgNOTGate, sideComponents, movingIndex, movingOffsetX, movingOffsetY, wire, wireIndex, timeHover, date;
 let wireCreation = false;
@@ -50,6 +50,104 @@ class MainComponent extends Component {
         super(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable);
         this.state = givenState;
     }
+
+    // Procedure method for updating the state of a component 
+    updateState() {
+        if (this.type != "switch" && this.type != "output") {
+            // For every node on the component
+            for (let i=0; i<this.nodeXs.length-1; i++) {
+                this.inputs[i] = "0";
+                for (let wire of wires) {
+                    // If wire ends in same position as component input node and the wire's output has not been found
+                    if (wire.endX == this.x + this.nodeXs[i] && wire.endY == this.y + this.nodeYs[i] && wire.outputComponent == null) {
+                        wire.outputComponent = mainComponents.indexOf(this);
+
+                        // Change the component's inputs property to be the given combination of inputs.
+                        switch (wire.state) {
+                            case true:
+                                this.inputs[i] = "1";
+                                break;
+                            case false:
+                                this.inputs[i] = "0";
+                        }
+                    }
+                }
+            }
+
+            for (let i=0; i<this.truthTable.length; i++) {
+                for (let j=0; j<this.inputs.length; j++) {
+                    if (this.truthTable[i][j] === this.inputs[j]) {
+                        // Flag to end loop if match found
+                        logicFlag = true;
+                    } else {
+                        logicFlag = false;
+                        // If one bit on row doesn't match, that row can't be correct, so move on to next row.
+                        break;
+                    }
+                }
+
+                // ... If they match, find the final digit of the correct row of the truth table to give the result. Change the component's state accordingly.
+                if (logicFlag == true) {
+                    switch (this.truthTable[i][this.truthTable[i].length-1]) {
+                        case "1":
+                            this.state = true;
+                            break;
+                        case "0":
+                            this.state = false;
+                    }
+                    logicFlag = false;
+                    // Once a row of the truth table has been matched, no more will match, so break out of loop
+                    break;
+                }
+            }
+        } else if (this.type == "output") {
+            // Check if the component is an output
+            for (let wire of wires) {
+                // If the wire is connected to the output's (input) node
+                if (this.x + this.nodeXs[0] == wire.endX && this.y + this.nodeYs[0] == wire.endY && wire.outputComponent == null) {
+                    wire.outputComponent = mainComponents.indexOf(this);
+                    this.state = wire.state;
+                    // Break as no wire can have more than one output
+                    break;
+                } else {
+                    this.state = false;
+                }
+            }
+        }
+    }
+
+    // Procedure method for moving a component across the screen. Called when mouse is pressed.
+    // This changes the coordinates of the component to the cursor's coordinates if the component is being moved.
+    moveComponent() {
+        // Locks the x coordinate of the component to the x coordinate of the grid
+        if ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth < boxWidth/2) {
+            this.x = mouseX - movingOffsetX - ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth) - nodeRadius;
+        } else {
+            this.x = mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth) - nodeRadius;
+        }
+
+        // Same for y coordinate
+        if ((mouseY - movingOffsetY) % boxWidth < boxWidth/2) {
+            this.y = mouseY - movingOffsetY - ((mouseY - movingOffsetY) % boxWidth) - nodeRadius;
+        } else {
+            this.y = mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY) % boxWidth) - nodeRadius;
+        }
+    }
+
+    // Procedure method for changing a switch's state
+    switchChangeState() {
+        // If component being clicked is a switch, flip its state.
+        if (this.type == "switch") {
+            if (this.state == true) {
+                this.state = false;
+                this.image = imgSwitchOff;
+            } else {
+                this.state = true;
+                this.image = imgSwitchOn;
+            }
+            console.log("Changed state");
+        }
+    }
 }
 
 // Wire class:
@@ -62,6 +160,19 @@ class Wire {
         this.state = givenState;
         this.inputComponent = givenInputComponent;
         this.outputComponent = givenOutputComponent;
+    }
+
+    backwardsUpdate() { // Procedure method called when mouse is released after creating a wire
+        if (this.startX > this.endX) { // Checks if the wire's starting x coordinate is greater than it's ending x coordinate
+            let temp = this.startX; // If it is, swaps them
+            this.startX = this.endX;
+            this.endX = temp;
+            if (this.inputComponent != null && this.outputComponent != null) { // Checks if the wire's been connected between two components
+                let temp = this.inputComponent; // If it has, swaps the input and output component indices
+                this.inputComponent = this.outputComponent;
+                this.outputComponent = temp;
+            }
+        }
     }
 }
 
@@ -137,72 +248,7 @@ function draw() {
     }
 
     for (let component of mainComponents) {
-        // Same but for the wire's output (components have several inputs so must go through all to find out which).
-        if (component.type != "switch" && component.type != "output") {
-            // For every node on the component
-            for (let i=0; i<component.nodeXs.length-1; i++) {
-                component.inputs[i] = "0";
-                for (let wire of wires) {
-                    // If wire ends in same position as component input node and the wire's output has not been found
-                    if (wire.endX == component.x + component.nodeXs[i] && wire.endY == component.y + component.nodeYs[i] && wire.outputComponent == null) {
-                        wire.outputComponent = mainComponents.indexOf(component);
-
-                        // Change the component's inputs property to be the given combination of inputs.
-                        switch (wire.state) {
-                            case true:
-                                component.inputs[i] = "1";
-                                break;
-                            case false:
-                                component.inputs[i] = "0";
-                        }
-                    }
-                }
-            }
-
-            // Loops through truth table for logic gate and compares to the inputs of the component...
-            for (let i=0; i<component.truthTable.length; i++) {
-                for (let j=0; j<component.inputs.length; j++) {
-                    // console.log(component.truthTable[i][j], component.inputs[j], i, j);
-                    if (component.truthTable[i][j] === component.inputs[j]) {
-                        // Flag to end loop if match found
-                        logicFlag = true;
-                    } else {
-                        logicFlag = false;
-                        // If one bit on row doesn't match, that row can't be correct, so move on to next row.
-                        break;
-                    }
-                }
-
-                // ... If they match, find the final digit of the correct row of the truth table to give the result. Change the component's state accordingly.
-                if (logicFlag == true) {
-                    switch (component.truthTable[i][component.truthTable[i].length-1]) {
-                        case "1":
-                            component.state = true;
-                            break;
-                        case "0":
-                            component.state = false;
-                    }
-                    logicFlag = false;
-                    // Once a row of the truth table has been matched, no more will match, so break out of loop
-                    break;
-                }
-            }
-        }
-        
-        for (let wire of wires) {
-            // Check if the component is an output and the wire hasn't been connected to it's output
-            if (component.type == "output" && wire.outputComponent == null) {
-                // If the wire is connected to the output's (input) node
-                if (component.x + component.nodeXs[0] == wire.endX && component.y + component.nodeYs[0] == wire.endY) {
-                    wire.outputComponent = mainComponents.indexOf(component);
-                    component.state = wire.state;
-                    // Break as no wire can have more than 1 output
-                    break;
-                } else {
-                    component.state = false;
-                }
-            }
-        }
+        component.updateState();
     }
 
     for (let wire of wires) {
@@ -246,23 +292,8 @@ function draw() {
             }
         }
 
-        // Changes the coordinates of the component to the cursor's coordinates if the component is being moved
         if (mainComponents.indexOf(component) == movingIndex) {
-
-            // Locks the x coordinate of the component to the x coordinate of the grid
-            if ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth < boxWidth/2) {
-                component.x = mouseX - movingOffsetX - ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth) - nodeRadius;
-            } else {
-                component.x = mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth) - nodeRadius;
-            }
-
-            // Same for y coordinate
-            if ((mouseY - movingOffsetY) % boxWidth < boxWidth/2) {
-                component.y = mouseY - movingOffsetY - ((mouseY - movingOffsetY) % boxWidth) - nodeRadius;
-            } else {
-                component.y = mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY) % boxWidth) - nodeRadius;
-            }
-            
+            component.moveComponent();
         }
 
         image(component.image, component.x, component.y, component.width, component.height);
@@ -298,51 +329,36 @@ function mousePressed() {
     }
 
     // Loops through all main components to find out which, if any, is being clicked on
-    if (mainComponents.length >= 1) {
-        for (let component of mainComponents) {
+    for (let component of mainComponents) {
+        console.log(mainComponents);
 
+        // WIRE CREATION
 
-            // WIRE CREATION
+        for (let i=0; i<component.nodeXs.length; i++) {
 
-            for (let i=0; i<component.nodeXs.length; i++) {
+            // If cursor is on top of a node of a component
+            if (Math.sqrt((component.x + component.nodeXs[i] - mouseX)**2 + (component.y + component.nodeYs[i] - mouseY)**2) < nodeRadius && mouseX > sideBoardWidth) {
+                wire = new Wire(component.x + component.nodeXs[i], component.y + component.nodeYs[i], component.x + component.nodeXs[i], component.y + component.nodeYs[i], false, mainComponents.indexOf(component), null);
+                wires.push(wire);
 
-                // If cursor is on top of a node of a component
-                if (Math.sqrt((component.x + component.nodeXs[i] - mouseX)**2 + (component.y + component.nodeYs[i] - mouseY)**2) < nodeRadius) {
-                    wire = new Wire(component.x + component.nodeXs[i], component.y + component.nodeYs[i], component.x + component.nodeXs[i], component.y + component.nodeYs[i], false, mainComponents.indexOf(component), null);
-                    wires.push(wire);
-
-                    wireCreation = true;
-                }
-            }
-
-
-            // MOVING / INTERACTING WITH COMPONENTS
-
-            if (wireCreation == false && mouseX >= component.x && mouseX <= component.x + component.width && mouseY >= component.y && mouseY <= component.y + component.height) {
-
-                // Displacement of cursor from component's coordinates (top-left)
-                movingOffsetX = mouseX - component.x;
-                movingOffsetY = mouseY - component.y;
-
-                // Index of component being moved
-                movingIndex = mainComponents.indexOf(component);
-
-                // If component being clicked is a switch, flip its state.
-                if (component.type == "switch") {
-                    if (component.state == true) {
-                        component.state = false;
-                        component.image = imgSwitchOff;
-                    } else {
-                        component.state = true;
-                        component.image = imgSwitchOn;
-                    }
-                    console.log("Changed state");
-                }
+                wireCreation = true;
             }
         }
-    }
 
-    console.log(mainComponents);
+
+        // MOVING / INTERACTING WITH COMPONENTS
+        
+        if (wireCreation == false && mouseX >= component.x && mouseX <= component.x + component.width && mouseY >= component.y && mouseY <= component.y + component.height) {
+            // Displacement of cursor from component's coordinates (top-left)
+            movingOffsetX = mouseX - component.x;
+            movingOffsetY = mouseY - component.y;
+
+            // // Index of component being moved
+            movingIndex = mainComponents.indexOf(component);
+
+            component.switchChangeState();
+        }
+    }
 }
 
 function mouseDragged() {
@@ -373,6 +389,8 @@ function mouseDragged() {
 function mouseReleased() {
     // If mouse is released while wire is being created, revert wireCreated to false
     if (wireCreation == true) {
+        wireIndex = wires.length - 1;
+        wires[wireIndex].backwardsUpdate();
         wireCreation = false;
     }
 
@@ -388,4 +406,23 @@ function mouseReleased() {
 function mouseMoved() {
     let date = new Date();
     timeHover = date.getTime();
+}
+
+// P5 defined function, called once every time a key is pressed
+function keyPressed() {
+    if (keyCode === 187) { // Checks for key code for + (=) key
+        boxWidth *= 2; // Enlarges boxes by a scale factor of 2
+        
+        for (let component of mainComponents) {
+            component.width *= 2;
+            component.height *= 2;
+        }
+    } else if (keyCode === 189) { // Checks for key code for - key
+        boxWidth /= 2; // Enlarges boxes by a scale factor of 1/2
+
+        for (let component of mainComponents) {
+            component.width /= 2;
+            component.height /= 2;
+        }
+    }
 }
