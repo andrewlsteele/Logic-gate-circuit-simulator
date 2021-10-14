@@ -12,6 +12,7 @@ p5.disableFriendlyErrors = true; // Disables friendly error system feature of p5
 // Variables:
 let boxWidth = 30;
 let nodeRadius = 30 * (boxWidth / 100);
+// let gridCoordinateOffset = sideBoardWidth
 
 let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutputOn, imgOutputOff, imgANDGate, imgORGate, imgNOTGate, sideComponents, movingIndex, movingOffsetX, movingOffsetY, wire, wireIndex, timeHover, date;
 let wireCreation = false;
@@ -23,9 +24,11 @@ let wires = [];
 
 // General component class:
 class Component {
-    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
+    constructor(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
         this.x = givenX;
         this.y = givenY;
+        this.gridX = givenGridX;
+        this.gridY = givenGridY;
         this.width = givenWidth;
         this.height = givenHeight;
         this.type = givenType;
@@ -38,16 +41,16 @@ class Component {
 }
 // Side component class (inherits from general component):
 class SideComponent extends Component {
-    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable, givenText) {
-        super(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable)
+    constructor(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable, givenText) {
+        super(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable)
         this.text = givenText;
     }
 }
 
 // Main component class (inherits from general component):
 class MainComponent extends Component {
-    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenState, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
-        super(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable);
+    constructor(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenState, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
+        super(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable);
         this.state = givenState;
     }
 
@@ -132,6 +135,9 @@ class MainComponent extends Component {
         } else {
             this.y = mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY) % boxWidth) - nodeRadius;
         }
+
+        this.gridX = convertToGridCoordinates("x", this.x);
+        this.gridY = convertToGridCoordinates("y", this.y);
     }
 
     // Procedure method for changing a switch's state
@@ -176,6 +182,22 @@ class Wire {
     }
 }
 
+function convertToGridCoordinates(axis, coordinate) {
+    if (axis == "x") {
+        return Math.floor((coordinate - sideBoardWidth)/boxWidth);
+    } else if (axis == "y") {
+        return Math.floor(coordinate/boxWidth);
+    }
+}
+
+function convertToCanvasCoordinates(axis, coordinate) {
+    if (axis == "x") {
+        return coordinate*boxWidth + coordinate;
+    } else if (axis == "y") {
+        return coordinate*boxWidth + coordinate;
+    }
+}
+
 
 // P5 defined function. Called once directly before setup(), setup() will wait for everything in this function to finish loading
 function preload() {
@@ -197,11 +219,11 @@ function setup() {
 
     // Array of side components. Components' nodes' coordinates are relative to the coordinates of the component.
     sideComponents = [
-        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 5, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "switch", imgSwitchOff, [boxWidth*2 + nodeRadius], [boxWidth + nodeRadius], [], [], "Switch"),
-        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 10+boxWidth*2, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "output", imgOutputOff, [nodeRadius], [boxWidth + nodeRadius], ["0"], [["0", "0"], ["1", "1"]], "Output"),
-        new SideComponent((sideBoardWidth-(boxWidth*4))/2, 15+2*(boxWidth*2), boxWidth*4 + nodeRadius*2, boxWidth*4 + nodeRadius*2, "ANDgate", imgANDGate, [nodeRadius, nodeRadius, boxWidth*4 + nodeRadius], [boxWidth + nodeRadius, boxWidth*3 + nodeRadius, boxWidth*2 + nodeRadius], ["0", "0"], [["0", "0", "0"], ["0", "1", "0"], ["1", "0", "0"], ["1", "1", "1"]], "AND gate"),
-        new SideComponent((sideBoardWidth-(boxWidth*4))/2, 25+2*(boxWidth*2)+boxWidth*4, boxWidth*4 + nodeRadius*2, boxWidth*4 + nodeRadius*2, "ORgate", imgORGate, [nodeRadius, nodeRadius, boxWidth*4 + nodeRadius], [boxWidth + nodeRadius, boxWidth*3 + nodeRadius, boxWidth*2 + nodeRadius], ["0", "0"], [["0", "0", "0"], ["0", "1", "1"], ["1", "0", "1"], ["1", "1", "1"]], "OR gate"),
-        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 40+2*(boxWidth*2)+2*(boxWidth*4), boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "NOTgate", imgNOTGate, [nodeRadius, boxWidth*2 + nodeRadius], [boxWidth + nodeRadius, boxWidth + nodeRadius], ["0"], [["0", "1"], ["1", "0"]], "NOT gate")
+        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 5, null, null, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "switch", imgSwitchOff, [boxWidth*2 + nodeRadius], [boxWidth + nodeRadius], [], [], "Switch"),
+        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 10+boxWidth*2, null, null, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "output", imgOutputOff, [nodeRadius], [boxWidth + nodeRadius], ["0"], [["0", "0"], ["1", "1"]], "Output"),
+        new SideComponent((sideBoardWidth-(boxWidth*4))/2, 15+2*(boxWidth*2), null, null, boxWidth*4 + nodeRadius*2, boxWidth*4 + nodeRadius*2, "ANDgate", imgANDGate, [nodeRadius, nodeRadius, boxWidth*4 + nodeRadius], [boxWidth + nodeRadius, boxWidth*3 + nodeRadius, boxWidth*2 + nodeRadius], ["0", "0"], [["0", "0", "0"], ["0", "1", "0"], ["1", "0", "0"], ["1", "1", "1"]], "AND gate"),
+        new SideComponent((sideBoardWidth-(boxWidth*4))/2, 25+2*(boxWidth*2)+boxWidth*4, null, null, boxWidth*4 + nodeRadius*2, boxWidth*4 + nodeRadius*2, "ORgate", imgORGate, [nodeRadius, nodeRadius, boxWidth*4 + nodeRadius], [boxWidth + nodeRadius, boxWidth*3 + nodeRadius, boxWidth*2 + nodeRadius], ["0", "0"], [["0", "0", "0"], ["0", "1", "1"], ["1", "0", "1"], ["1", "1", "1"]], "OR gate"),
+        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 40+2*(boxWidth*2)+2*(boxWidth*4), null, null, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "NOTgate", imgNOTGate, [nodeRadius, boxWidth*2 + nodeRadius], [boxWidth + nodeRadius, boxWidth + nodeRadius], ["0"], [["0", "1"], ["1", "0"]], "NOT gate")
     ];
 }
 
@@ -324,13 +346,27 @@ function mousePressed() {
         // If the mouse cursor is on top of a side component
         if (mouseX >= component.x && mouseX <= component.x + component.width && mouseY >= component.y && mouseY <= component.y + component.height) {
             // Creates a new main component in a list containing all main components
-            mainComponents.push(new MainComponent(component.x, component.y, component.width, component.height, component.type, component.image, false, component.nodeXs, component.nodeYs, component.inputs, component.truthTable));
+            mainComponents.push(new MainComponent(
+                component.x, 
+                component.y, 
+                convertToGridCoordinates("x", component.x), 
+                convertToGridCoordinates("y", component.y), 
+                component.width, 
+                component.height, 
+                component.type, 
+                component.image, 
+                false, 
+                component.nodeXs, 
+                component.nodeYs, 
+                component.inputs, 
+                component.truthTable));
         }
     }
 
     // Loops through all main components to find out which, if any, is being clicked on
     for (let component of mainComponents) {
         console.log(mainComponents);
+        console.log(component.gridX, component.gridY);
 
         // WIRE CREATION
 
@@ -424,5 +460,10 @@ function keyPressed() {
             component.width /= 2;
             component.height /= 2;
         }
+    }
+
+    for (let component of mainComponents) {
+        component.x = convertToCanvasCoordinates("x", component.gridX);
+        component.y = convertToCanvasCoordinates("y", component.gridY);
     }
 }
