@@ -12,9 +12,10 @@ p5.disableFriendlyErrors = true; // Disables friendly error system feature of p5
 // Variables:
 let boxWidth = 30;
 let nodeRadius = 30 * (boxWidth / 100);
-// let gridCoordinateOffset = sideBoardWidth
 
-let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutputOn, imgOutputOff, imgANDGate, imgORGate, imgNOTGate, sideComponents, movingIndex, movingOffsetX, movingOffsetY, wire, wireIndex, timeHover, date;
+let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutputOn, imgOutputOff, imgANDGate, imgORGate, imgNOTGate, sideComponents, movingOffsetX, movingOffsetY, wire, wireIndex, timeHover, date, cameraCoords;
+let zoomMultiplier = 1;
+let movingIndex = -1;
 let wireCreation = false;
 let logicFlag = false;
 let inputFound = false;
@@ -24,11 +25,9 @@ let wires = [];
 
 // General component class:
 class Component {
-    constructor(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
+    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
         this.x = givenX;
         this.y = givenY;
-        this.gridX = givenGridX;
-        this.gridY = givenGridY;
         this.width = givenWidth;
         this.height = givenHeight;
         this.type = givenType;
@@ -41,16 +40,16 @@ class Component {
 }
 // Side component class (inherits from general component):
 class SideComponent extends Component {
-    constructor(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable, givenText) {
-        super(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable)
+    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable, givenText) {
+        super(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable)
         this.text = givenText;
     }
 }
 
 // Main component class (inherits from general component):
 class MainComponent extends Component {
-    constructor(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenState, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
-        super(givenX, givenY, givenGridX, givenGridY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable);
+    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenState, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
+        super(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable);
         this.state = givenState;
     }
 
@@ -62,7 +61,7 @@ class MainComponent extends Component {
                 this.inputs[i] = "0";
                 for (let wire of wires) {
                     // If wire ends in same position as component input node and the wire's output has not been found
-                    if (wire.endX == this.x + this.nodeXs[i] && wire.endY == this.y + this.nodeYs[i] && wire.outputComponent == null) {
+                    if (wire.endX == this.x + this.nodeXs[i] - cameraCoords.x && wire.endY == this.y + this.nodeYs[i] - cameraCoords.y && wire.outputComponent == null) {
                         wire.outputComponent = mainComponents.indexOf(this);
 
                         // Change the component's inputs property to be the given combination of inputs.
@@ -107,7 +106,7 @@ class MainComponent extends Component {
             // Check if the component is an output
             for (let wire of wires) {
                 // If the wire is connected to the output's (input) node
-                if (this.x + this.nodeXs[0] == wire.endX && this.y + this.nodeYs[0] == wire.endY && wire.outputComponent == null) {
+                if (this.x + this.nodeXs[0] - cameraCoords.x == wire.endX && this.y + this.nodeYs[0] - cameraCoords.y == wire.endY && wire.outputComponent == null) {
                     wire.outputComponent = mainComponents.indexOf(this);
                     this.state = wire.state;
                     // Break as no wire can have more than one output
@@ -123,21 +122,18 @@ class MainComponent extends Component {
     // This changes the coordinates of the component to the cursor's coordinates if the component is being moved.
     moveComponent() {
         // Locks the x coordinate of the component to the x coordinate of the grid
-        if ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth < boxWidth/2) {
-            this.x = mouseX - movingOffsetX - ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth) - nodeRadius;
+        if ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth < boxWidth/2) {
+            this.x = (mouseX - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius)/zoomMultiplier - cameraCoords.x;
         } else {
-            this.x = mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - sideBoardWidth) % boxWidth) - nodeRadius;
+            this.x = (mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius)/zoomMultiplier - cameraCoords.x;
         }
 
         // Same for y coordinate
-        if ((mouseY - movingOffsetY) % boxWidth < boxWidth/2) {
-            this.y = mouseY - movingOffsetY - ((mouseY - movingOffsetY) % boxWidth) - nodeRadius;
+        if ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth < boxWidth/2) {
+            this.y = (mouseY - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius)/zoomMultiplier - cameraCoords.y;
         } else {
-            this.y = mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY) % boxWidth) - nodeRadius;
+            this.y = (mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius)/zoomMultiplier - cameraCoords.y;
         }
-
-        this.gridX = convertToGridCoordinates("x", this.x);
-        this.gridY = convertToGridCoordinates("y", this.y);
     }
 
     // Procedure method for changing a switch's state
@@ -182,23 +178,6 @@ class Wire {
     }
 }
 
-function convertToGridCoordinates(axis, coordinate) {
-    if (axis == "x") {
-        return Math.floor((coordinate - sideBoardWidth)/boxWidth);
-    } else if (axis == "y") {
-        return Math.floor(coordinate/boxWidth);
-    }
-}
-
-function convertToCanvasCoordinates(axis, coordinate) {
-    if (axis == "x") {
-        return coordinate*boxWidth + coordinate;
-    } else if (axis == "y") {
-        return coordinate*boxWidth + coordinate;
-    }
-}
-
-
 // P5 defined function. Called once directly before setup(), setup() will wait for everything in this function to finish loading
 function preload() {
     // Will load graphics for side components
@@ -219,11 +198,11 @@ function setup() {
 
     // Array of side components. Components' nodes' coordinates are relative to the coordinates of the component.
     sideComponents = [
-        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 5, null, null, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "switch", imgSwitchOff, [boxWidth*2 + nodeRadius], [boxWidth + nodeRadius], [], [], "Switch"),
-        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 10+boxWidth*2, null, null, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "output", imgOutputOff, [nodeRadius], [boxWidth + nodeRadius], ["0"], [["0", "0"], ["1", "1"]], "Output"),
-        new SideComponent((sideBoardWidth-(boxWidth*4))/2, 15+2*(boxWidth*2), null, null, boxWidth*4 + nodeRadius*2, boxWidth*4 + nodeRadius*2, "ANDgate", imgANDGate, [nodeRadius, nodeRadius, boxWidth*4 + nodeRadius], [boxWidth + nodeRadius, boxWidth*3 + nodeRadius, boxWidth*2 + nodeRadius], ["0", "0"], [["0", "0", "0"], ["0", "1", "0"], ["1", "0", "0"], ["1", "1", "1"]], "AND gate"),
-        new SideComponent((sideBoardWidth-(boxWidth*4))/2, 25+2*(boxWidth*2)+boxWidth*4, null, null, boxWidth*4 + nodeRadius*2, boxWidth*4 + nodeRadius*2, "ORgate", imgORGate, [nodeRadius, nodeRadius, boxWidth*4 + nodeRadius], [boxWidth + nodeRadius, boxWidth*3 + nodeRadius, boxWidth*2 + nodeRadius], ["0", "0"], [["0", "0", "0"], ["0", "1", "1"], ["1", "0", "1"], ["1", "1", "1"]], "OR gate"),
-        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 40+2*(boxWidth*2)+2*(boxWidth*4), null, null, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "NOTgate", imgNOTGate, [nodeRadius, boxWidth*2 + nodeRadius], [boxWidth + nodeRadius, boxWidth + nodeRadius], ["0"], [["0", "1"], ["1", "0"]], "NOT gate")
+        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 5, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "switch", imgSwitchOff, [boxWidth*2 + nodeRadius], [boxWidth + nodeRadius], [], [], "Switch"),
+        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 10+boxWidth*2, boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "output", imgOutputOff, [nodeRadius], [boxWidth + nodeRadius], ["0"], [["0", "0"], ["1", "1"]], "Output"),
+        new SideComponent((sideBoardWidth-(boxWidth*4))/2, 15+2*(boxWidth*2), boxWidth*4 + nodeRadius*2, boxWidth*4 + nodeRadius*2, "ANDgate", imgANDGate, [nodeRadius, nodeRadius, boxWidth*4 + nodeRadius], [boxWidth + nodeRadius, boxWidth*3 + nodeRadius, boxWidth*2 + nodeRadius], ["0", "0"], [["0", "0", "0"], ["0", "1", "0"], ["1", "0", "0"], ["1", "1", "1"]], "AND gate"),
+        new SideComponent((sideBoardWidth-(boxWidth*4))/2, 25+2*(boxWidth*2)+boxWidth*4, boxWidth*4 + nodeRadius*2, boxWidth*4 + nodeRadius*2, "ORgate", imgORGate, [nodeRadius, nodeRadius, boxWidth*4 + nodeRadius], [boxWidth + nodeRadius, boxWidth*3 + nodeRadius, boxWidth*2 + nodeRadius], ["0", "0"], [["0", "0", "0"], ["0", "1", "1"], ["1", "0", "1"], ["1", "1", "1"]], "OR gate"),
+        new SideComponent((sideBoardWidth-(boxWidth*2))/2, 40+2*(boxWidth*2)+2*(boxWidth*4), boxWidth*2 + nodeRadius*2, boxWidth*2 + nodeRadius*2, "NOTgate", imgNOTGate, [nodeRadius, boxWidth*2 + nodeRadius], [boxWidth + nodeRadius, boxWidth + nodeRadius], ["0"], [["0", "1"], ["1", "0"]], "NOT gate")
     ];
 }
 
@@ -241,14 +220,26 @@ function draw() {
     clear();
     strokeWeight(5);
     stroke(0);
-    line(sideBoardWidth, 0, sideBoardWidth, windowHeight); // Creates a line from top to bottom a fifth along - line(x1, y1, x2, y2);
     strokeWeight(1);
-    // Draws grid
-    for (let i=0; i<(windowWidth-sideBoardWidth)/boxWidth; i++) {
-        line(i*boxWidth + sideBoardWidth, windowHeight, i*boxWidth + sideBoardWidth, 0);
+
+    line(sideBoardWidth, 0, sideBoardWidth, windowHeight); // Creates a line from top to bottom a fifth along - line(x1, y1, x2, y2);
+    // DRAWS SIDE COMPONENTS
+    for (let component of sideComponents) {
+        image(component.image, component.x, component.y, component.width, component.height);
     }
-    for (let i=0; i<windowHeight/boxWidth; i++) {
-        line(sideBoardWidth, i*boxWidth, windowWidth, i*boxWidth);
+
+    push() // Saves the state of what has been drawn so that the side board isn't affected by zooming/panning
+    cameraCoords = {x: sideBoardWidth, y: 0}; // Stores the coordinates of the camera
+    translate(cameraCoords.x, cameraCoords.y); // Translates the camera to the coordinates given
+    console.log(zoomMultiplier);
+    scale(zoomMultiplier); // Scales the camera depending on the zoom multiplier (given by how much the user has scrolled)
+
+    // Draws grid
+    for (let i=0; i<(windowWidth-cameraCoords.x)/(boxWidth*zoomMultiplier); i++) {
+        line(i*boxWidth, windowHeight/zoomMultiplier, i*boxWidth, 0);
+    }
+    for (let i=0; i<(windowHeight-cameraCoords.y)/(boxWidth*zoomMultiplier); i++) {
+        line(0, i*boxWidth, windowWidth/zoomMultiplier, i*boxWidth);
     }
 
     // DRAWS THE WIRES
@@ -294,12 +285,6 @@ function draw() {
         }
 
         line(wire.startX, wire.startY, wire.endX, wire.endY);
-    }
-    
-
-    // DRAWS SIDE COMPONENTS
-    for (let component of sideComponents) {
-        image(component.image, component.x, component.y, component.width, component.height);
     }
 
     // DRAWS MAIN COMPONENTS
@@ -349,8 +334,6 @@ function mousePressed() {
             mainComponents.push(new MainComponent(
                 component.x, 
                 component.y, 
-                convertToGridCoordinates("x", component.x), 
-                convertToGridCoordinates("y", component.y), 
                 component.width, 
                 component.height, 
                 component.type, 
@@ -366,14 +349,13 @@ function mousePressed() {
     // Loops through all main components to find out which, if any, is being clicked on
     for (let component of mainComponents) {
         console.log(mainComponents);
-        console.log(component.gridX, component.gridY);
 
         // WIRE CREATION
 
         for (let i=0; i<component.nodeXs.length; i++) {
 
             // If cursor is on top of a node of a component
-            if (Math.sqrt((component.x + component.nodeXs[i] - mouseX)**2 + (component.y + component.nodeYs[i] - mouseY)**2) < nodeRadius && mouseX > sideBoardWidth) {
+            if (Math.sqrt((component.x + component.nodeXs[i] - (mouseX - cameraCoords.x))**2 + (component.y + component.nodeYs[i] - (mouseY - cameraCoords.y))**2) < nodeRadius && mouseX > sideBoardWidth) {
                 wire = new Wire(component.x + component.nodeXs[i], component.y + component.nodeYs[i], component.x + component.nodeXs[i], component.y + component.nodeYs[i], false, mainComponents.indexOf(component), null);
                 wires.push(wire);
 
@@ -404,17 +386,17 @@ function mouseDragged() {
     if (wireCreation == true) {
         // If the mouse is further along the x axis than the y axis, keep the ending y position the same as the starting y position and change the ending x position so that it is the mouse's x but locked to the grid.
         if (Math.abs(mouseX - wires[wireIndex].startX) > abs(mouseY - wires[wireIndex].startY)) {
-            if ((mouseX - sideBoardWidth) % boxWidth < boxWidth / 2) {
-                wires[wireIndex].endX = mouseX - ((mouseX - sideBoardWidth) % boxWidth);
+            if ((mouseX - cameraCoords.x) % boxWidth < boxWidth / 2) {
+                wires[wireIndex].endX = mouseX - ((mouseX - cameraCoords.x) % boxWidth) - cameraCoords.x;
             } else {
-                wires[wireIndex].endX = mouseX + boxWidth - ((mouseX - sideBoardWidth) % boxWidth);
+                wires[wireIndex].endX = mouseX + boxWidth - ((mouseX - cameraCoords.x) % boxWidth) - cameraCoords.x;
             }
             wires[wireIndex].endY = wires[wireIndex].startY;
         } else {
             if (mouseY % boxWidth < boxWidth / 2) {
-                wires[wireIndex].endY = mouseY - (mouseY % boxWidth);
+                wires[wireIndex].endY = mouseY - (mouseY % boxWidth) - cameraCoords.y;
              } else {
-                wires[wireIndex].endY = mouseY + boxWidth - (mouseY % boxWidth);
+                wires[wireIndex].endY = mouseY + boxWidth - (mouseY % boxWidth) - cameraCoords.y;
             }
             wires[wireIndex].endX = wires[wireIndex].startX;
         }
@@ -431,7 +413,7 @@ function mouseReleased() {
     }
 
     // If a component is being moved and the x-coordinate is less than the side board's boundary, remove the item from the list.
-    if (movingIndex > -1 && mainComponents[movingIndex].x < sideBoardWidth) {
+    if (movingIndex > -1 && mainComponents[movingIndex].x + cameraCoords.x < sideBoardWidth) {
         mainComponents.splice(movingIndex, 1);
     }
 
@@ -444,26 +426,11 @@ function mouseMoved() {
     timeHover = date.getTime();
 }
 
-// P5 defined function, called once every time a key is pressed
-function keyPressed() {
-    if (keyCode === 187) { // Checks for key code for + (=) key
-        boxWidth *= 2; // Enlarges boxes by a scale factor of 2
-        
-        for (let component of mainComponents) {
-            component.width *= 2;
-            component.height *= 2;
-        }
-    } else if (keyCode === 189) { // Checks for key code for - key
-        boxWidth /= 2; // Enlarges boxes by a scale factor of 1/2
-
-        for (let component of mainComponents) {
-            component.width /= 2;
-            component.height /= 2;
-        }
-    }
-
-    for (let component of mainComponents) {
-        component.x = convertToCanvasCoordinates("x", component.gridX);
-        component.y = convertToCanvasCoordinates("y", component.gridY);
+// P5-defined function being called whenever the mouse wheel is scrolled. This also takes as an argument the amount that the mouse wheel has been scrolled.
+// This function will add the (normalised) amount of scrolling to the zoomMultiplier variable to increase or decrease the zoom.
+function mouseWheel(event) {
+    if (movingIndex == -1) {
+        console.log(-event.delta / (2000/3));
+        zoomMultiplier += -event.delta / (2000/3); // 2000/3 is the scrolling amount of one scroll of my mouse.
     }
 }
