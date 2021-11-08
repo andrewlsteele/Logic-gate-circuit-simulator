@@ -17,6 +17,8 @@ function draw() {
         line(-cameraCoords.x, i * boxWidth, windowWidth - cameraCoords.x, i * boxWidth);
     }
 
+    for (let i = 0; i < )
+
     // DRAWS THE WIRES
     for (let wire of wires) {
         wire.outputComponent = null;
