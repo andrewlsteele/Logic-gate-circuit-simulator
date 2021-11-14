@@ -10,12 +10,12 @@ p5.disableFriendlyErrors = true; // Disables friendly error system feature of p5
 
 
 // Variables:
-let boxWidth = 30;
-let nodeRadius = 30 * (boxWidth / 100);
+const boxWidth = 30;
+const nodeRadius = 30 * (boxWidth / 100);
 
 let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutputOn, imgOutputOff, imgANDGate, imgORGate, imgNOTGate;
 let sideComponents, movingOffsetX, movingOffsetY, wire, wireIndex, timeHover, date, cameraCoords;
-let zoomMultiplier = 1;
+let zoomValue = 1;
 let movingIndex = -1;
 let wireCreation = false;
 let logicFlag = false;
@@ -136,7 +136,9 @@ function windowResized() {
 
 // P5 defined function, called once when mouse is pressed
 function mousePressed() {
-    console.log(mainComponents);
+    console.log("Main Components: ", mainComponents);
+    console.log("Wires: ", wires);
+    console.log("Side Components: ", sideComponents);
     for (let component of sideComponents) {
         // If the mouse cursor is on top of a side component
         if (mouseX >= component.x && mouseX <= component.x + component.width && mouseY >= component.y && mouseY <= component.y + component.height) {
@@ -274,10 +276,10 @@ function mouseMoved() {
 }
 
 // P5-defined function being called whenever the mouse wheel is scrolled. This also takes as an argument the amount that the mouse wheel has been scrolled.
-// This function will add the (normalised) amount of scrolling to the zoomMultiplier variable to increase or decrease the zoom.
+// This function will add the (normalised) amount of scrolling to the zoomValue variable to increase or decrease the zoom.
 function mouseWheel(event) {
     if (movingIndex == -1) {
         console.log(-event.delta / (2000 / 3));
-        zoomMultiplier += -event.delta / (2000 / 3); // 2000/3 is the scrolling amount of one scroll of my mouse.
+        zoomValue += -event.delta / (2000 / 3); // 2000/3 is the scrolling amount of one scroll of my mouse.
     }
 }

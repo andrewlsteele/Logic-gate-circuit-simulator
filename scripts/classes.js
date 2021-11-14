@@ -98,16 +98,16 @@ class MainComponent extends Component {
     moveComponent() {
         // Locks the x coordinate of the component to the x coordinate of the grid
         if ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth < boxWidth / 2) {
-            this.x = (mouseX - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomMultiplier - cameraCoords.x;
+            this.x = (mouseX - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.x;
         } else {
-            this.x = (mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomMultiplier - cameraCoords.x;
+            this.x = (mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.x;
         }
 
         // Same for y coordinate
         if ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth < boxWidth / 2) {
-            this.y = (mouseY - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomMultiplier - cameraCoords.y;
+            this.y = (mouseY - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.y;
         } else {
-            this.y = (mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomMultiplier - cameraCoords.y;
+            this.y = (mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.y;
         }
     }
 
