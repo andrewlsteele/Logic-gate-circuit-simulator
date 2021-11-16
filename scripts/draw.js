@@ -1,27 +1,28 @@
 // P5 defined function. Called once every frame.
 function draw() {
+    // console.log(getFrameRate());
     clear();
     stroke(0);
     strokeWeight(1);
 
     translate(cameraCoords.x, cameraCoords.y); // Translates the camera to the coordinates given
-    scale(zoomMultiplier); // Scales the camera depending on the zoom multiplier (given by how much the user has scrolled)
+    scale(zoomValue); // Scales the camera depending on the zoom multiplier (given by how much the user has scrolled)
 
     // Draws grid
     // Vertical
-    for (let i = 0; i < (windowWidth - cameraCoords.x) / boxWidth; i++) {
-        line(i * boxWidth, windowHeight - cameraCoords.y, i * boxWidth, -cameraCoords.y);
+    for (let i = 0; i < (windowWidth - cameraCoords.x) / (boxWidth*zoomValue); i++) {
+        line(i * boxWidth * zoomValue, windowHeight - cameraCoords.y, i * boxWidth * zoomValue, -cameraCoords.y);
     }
     // Horizontal
-    for (let i = 0; i < (windowHeight - cameraCoords.y) / boxWidth; i++) {
-        line(-cameraCoords.x, i * boxWidth, windowWidth - cameraCoords.x, i * boxWidth);
+    for (let i = 0; i < (windowHeight - cameraCoords.y) / (boxWidth*zoomValue); i++) {
+        line(-cameraCoords.x, i * boxWidth * zoomValue, windowWidth - cameraCoords.x, i * boxWidth * zoomValue);
     }
 
-    for (let i = -1; i > (-windowWidth - cameraCoords.x) / boxWidth; i--) {
-        line(i * boxWidth, windowHeight - cameraCoords.y, i * boxWidth, -cameraCoords.y);
+    for (let i = -1; i > (-cameraCoords.x) / (boxWidth*zoomValue); i--) {
+        line(i * boxWidth * zoomValue, windowHeight - cameraCoords.y, i * boxWidth * zoomValue, -cameraCoords.y);
     }
-    for (let i = -1; i > (-windowHeight - cameraCoords.y) / boxWidth; i--) {
-        line(-cameraCoords.x, i * boxWidth, windowWidth - cameraCoords.x, i * boxWidth);
+    for (let i = -1; i > (-cameraCoords.y) / (boxWidth*zoomValue); i--) {
+        line(-cameraCoords.x, i * boxWidth * zoomValue, windowWidth - cameraCoords.x, i * boxWidth * zoomValue);
     }
 
     // DRAWS THE WIRES
@@ -83,13 +84,14 @@ function draw() {
         }
 
         if (mainComponents.indexOf(component) == movingIndex) {
-            component.moveComponent();
+            continue; // If component is being moved, move on to next component as this will be drawn later (so that it's on top of the side board).
         }
 
         image(component.image, component.x, component.y, component.width, component.height);
     }
 
-    push() // Saves the state of what has been drawn so that the side board isn't affected by zooming/panning
+    // push() // Saves the state of what has been drawn so that the side board isn't affected by zooming/panning
+    scale(1/zoomValue);
     translate(-cameraCoords.x, -cameraCoords.y);
 
     // Draws the side board
@@ -98,15 +100,17 @@ function draw() {
 
     line(sideBoardWidth, 0, sideBoardWidth, windowHeight); // Creates a line from top to bottom a fifth along - line(x1, y1, x2, y2);
     fill(255);
-    rect(-1, -1, sideBoardWidth+1, windowHeight+5);
+    rect(0, 0, sideBoardWidth, windowHeight);
 
     // DRAWS SIDE COMPONENTS
     for (let component of sideComponents) {
         image(component.image, component.x, component.y, component.width, component.height);
     }
 
-    if (movingIndex != -1) {
-        image(mainComponents[movingIndex].image, mainComponents[movingIndex].x + cameraCoords.x, mainComponents[movingIndex].y + cameraCoords.y, mainComponents[movingIndex].width, mainComponents[movingIndex].height);
+    if (movingIndex > -1) {
+        mainComponents[movingIndex].moveComponent();
+        component = mainComponents[movingIndex];
+        image(component.image, component.x + cameraCoords.x, component.y + cameraCoords.y, component.width, component.height);
     }
 
 
@@ -115,8 +119,8 @@ function draw() {
     for (let component of sideComponents) {
         if (mouseX >= component.x && mouseX <= component.x + component.width && mouseY >= component.y && mouseY <= component.y + component.height) {
             if (date.getTime() - timeHover >= 1000) {
-                fill(255)
-                stroke(0)
+                fill(255);
+                stroke(0);
                 strokeWeight(1);
                 rect(mouseX, mouseY, textWidth(component.text), 50);
                 textSize(25);
