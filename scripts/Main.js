@@ -136,7 +136,7 @@ function windowResized() {
 
 // P5 defined function, called once when mouse is pressed
 function mousePressed() {
-    console.log(mainComponents);
+    // console.log(mainComponents);
     for (let component of sideComponents) {
         // If the mouse cursor is on top of a side component
         if (mouseX >= component.x && mouseX <= component.x + component.width && mouseY >= component.y && mouseY <= component.y + component.height) {
@@ -171,7 +171,7 @@ function mousePressed() {
 
     // Loops through all main components to find out which, if any, is being clicked on
     for (let component of mainComponents) {
-        console.log(component.state);
+        // console.log(component.state);
 
         // WIRE CREATION
 
@@ -242,7 +242,7 @@ function mouseDragged() {
 
     // Panning the board:
     // If mouse drag does not mean wires are being created or components are being moved,
-    if (wireCreation == false && movingIndex == -1) {
+    if (wireCreation == false && movingIndex == -1 && pmouseX > sideBoardWidth) {
 
         // Finds the displacement between mouse coordinates in this frame and the previous frame. pmouse = mouse coordinates in previous frame
         cameraCoords.x += mouseX - pmouseX;

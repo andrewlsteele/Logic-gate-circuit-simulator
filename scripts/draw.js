@@ -17,7 +17,12 @@ function draw() {
         line(-cameraCoords.x, i * boxWidth, windowWidth - cameraCoords.x, i * boxWidth);
     }
 
-    for (let i = 0; i < )
+    for (let i = -1; i > (-windowWidth - cameraCoords.x) / boxWidth; i--) {
+        line(i * boxWidth, windowHeight - cameraCoords.y, i * boxWidth, -cameraCoords.y);
+    }
+    for (let i = -1; i > (-windowHeight - cameraCoords.y) / boxWidth; i--) {
+        line(-cameraCoords.x, i * boxWidth, windowWidth - cameraCoords.x, i * boxWidth);
+    }
 
     // DRAWS THE WIRES
     for (let wire of wires) {
@@ -92,14 +97,17 @@ function draw() {
     strokeWeight(1);
 
     line(sideBoardWidth, 0, sideBoardWidth, windowHeight); // Creates a line from top to bottom a fifth along - line(x1, y1, x2, y2);
-    rect(0, 0, sideBoardWidth, windowHeight);
+    fill(255);
+    rect(-1, -1, sideBoardWidth+1, windowHeight+5);
 
     // DRAWS SIDE COMPONENTS
     for (let component of sideComponents) {
         image(component.image, component.x, component.y, component.width, component.height);
     }
 
-    // for (let component of mainComponents)
+    if (movingIndex != -1) {
+        image(mainComponents[movingIndex].image, mainComponents[movingIndex].x + cameraCoords.x, mainComponents[movingIndex].y + cameraCoords.y, mainComponents[movingIndex].width, mainComponents[movingIndex].height);
+    }
 
 
     // Drawing text boxes for components
