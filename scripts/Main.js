@@ -14,7 +14,7 @@ const boxWidth = 30;
 const nodeRadius = 30 * (boxWidth / 100);
 
 let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutputOn, imgOutputOff, imgANDGate, imgORGate, imgNOTGate;
-let sideComponents, movingOffsetX, movingOffsetY, wire, wireIndex, timeHover, date, cameraCoords;
+let sideComponents, movingOffsetX, movingOffsetY, wire, wireIndex, timeHover, date, cameraCoords, wireSelected;
 let zoomValue = 1;
 let movingIndex = -1;
 let wireCreation = false;
@@ -42,7 +42,7 @@ function setup() {
     createCanvas(windowWidth, windowHeight, P2D); // Third parameter (P2D) is renderer, in this case P5's 2D renderer
     frameRate(60);
     sideBoardWidth = windowWidth / 5;
-    cameraCoords = { x: sideBoardWidth, y: 0 }; // Stores the coordinates of the camera
+    cameraCoords = { x: Math.floor(sideBoardWidth), y: 0 }; // Stores the coordinates of the camera
 
     // Array of side components. Components' nodes' coordinates are relative to the coordinates of the component.
     
@@ -60,8 +60,7 @@ function setup() {
     //      givenText: any): SideComponent
     sideComponents = [
         new SideComponent(
-            (sideBoardWidth - (boxWidth * 2)) / 2, 
-            5,
+            {x: (sideBoardWidth - (boxWidth * 2)) / 2, y: 5},
             boxWidth * 2 + nodeRadius * 2, 
             boxWidth * 2 + nodeRadius * 2, 
             "switch", imgSwitchOff, 
@@ -72,8 +71,7 @@ function setup() {
             "Switch"),
 
         new SideComponent(
-            (sideBoardWidth - (boxWidth * 2)) / 2, 
-            10 + boxWidth * 2, 
+            {x: (sideBoardWidth - (boxWidth * 2)) / 2, y: 10 + boxWidth * 2}, 
             boxWidth * 2 + nodeRadius * 2, 
             boxWidth * 2 + nodeRadius * 2, 
             "output", 
@@ -85,8 +83,7 @@ function setup() {
             "Output"),
 
         new SideComponent(
-            (sideBoardWidth - (boxWidth * 4)) / 2, 
-            15 + 2 * (boxWidth * 2), 
+            {x: (sideBoardWidth - (boxWidth * 4)) / 2, y: 15 + 2 * (boxWidth * 2)}, 
             boxWidth * 4 + nodeRadius * 2, 
             boxWidth * 4 + nodeRadius * 2, 
             "ANDgate", 
@@ -98,8 +95,7 @@ function setup() {
             "AND gate"),
 
         new SideComponent(
-            (sideBoardWidth - (boxWidth * 4)) / 2, 
-            25 + 2 * (boxWidth * 2) + boxWidth * 4, 
+            {x: (sideBoardWidth - (boxWidth * 4)) / 2, y: 25 + 2 * (boxWidth * 2) + boxWidth * 4},
             boxWidth * 4 + nodeRadius * 2, 
             boxWidth * 4 + nodeRadius * 2, 
             "ORgate", 
@@ -111,8 +107,7 @@ function setup() {
             "OR gate"),
 
         new SideComponent(
-            (sideBoardWidth - (boxWidth * 2)) / 2, 
-            40 + 2 * (boxWidth * 2) + 2 * (boxWidth * 4), 
+            {x: (sideBoardWidth - (boxWidth * 2)) / 2, y: 40 + 2 * (boxWidth * 2) + 2 * (boxWidth * 4)}, 
             boxWidth * 2 + nodeRadius * 2, 
             boxWidth * 2 + nodeRadius * 2, 
             "NOTgate", 
@@ -130,18 +125,26 @@ function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     sideBoardWidth = windowWidth / 5;
     for (let component of sideComponents) {
-        component.x = ((sideBoardWidth - (component.width)) / 2);
+        component.coordinates.x = ((sideBoardWidth - (component.width)) / 2);
     }
 }
 
 // P5 defined function, called once when mouse is pressed
 function mousePressed() {
+    wireSelected = null;
+    console.clear();
     console.log("Main Components: ", mainComponents);
     console.log("Wires: ", wires);
     console.log("Side Components: ", sideComponents);
+    console.log("Camera coordinates: ", cameraCoords);
+    mainComponents.forEach(component => {
+        console.log("Main component coordinates: ", mainComponents[0].coordinates);
+        console.log("Predicted main component coordinates: ", gridToCanvas(mainComponents[0].coordinates))
+    });
+
     for (let component of sideComponents) {
         // If the mouse cursor is on top of a side component
-        if (mouseX >= component.x && mouseX <= component.x + component.width && mouseY >= component.y && mouseY <= component.y + component.height) {
+        if (mouseX >= component.coordinates.x && mouseX <= component.coordinates.x + component.width && mouseY >= component.coordinates.y && mouseY <= component.coordinates.y + component.height) {
             // Creates a new main component in a list containing all main components
 
             // MainComponent(
@@ -157,8 +160,7 @@ function mousePressed() {
             //      givenInputs: any, 
             //      givenTruthTable: any): MainComponent
             mainComponents.push(new MainComponent(
-                component.x - cameraCoords.x,
-                component.y - cameraCoords.y,
+                {x: component.coordinates.x - cameraCoords.x, y: component.coordinates.y - cameraCoords.y},
                 component.width,
                 component.height,
                 component.type,
@@ -180,7 +182,7 @@ function mousePressed() {
         for (let i = 0; i < component.nodeXs.length; i++) {
 
             // If cursor is on top of a node of a component
-            if (Math.sqrt((component.x + component.nodeXs[i] - (mouseX - cameraCoords.x)) ** 2 + (component.y + component.nodeYs[i] - (mouseY - cameraCoords.y)) ** 2) < nodeRadius && mouseX > sideBoardWidth) {
+            if (Math.sqrt((component.coordinates.x + component.nodeXs[i] - (mouseX - cameraCoords.x)) ** 2 + (component.coordinates.y + component.nodeYs[i] - (mouseY - cameraCoords.y)) ** 2) < nodeRadius && mouseX > sideBoardWidth) {
                 
                 // Wire(
                 //      givenStartX: any, 
@@ -190,10 +192,10 @@ function mousePressed() {
                 //      givenState: any, 
                 //      givenInputComponent: any, 
                 //      givenOutputComponent: any): Wire
-                wire = new Wire(component.x + component.nodeXs[i], 
-                    component.y + component.nodeYs[i], 
-                    component.x + component.nodeXs[i], 
-                    component.y + component.nodeYs[i], 
+                wire = new Wire(component.coordinates.x + component.nodeXs[i], 
+                    component.coordinates.y + component.nodeYs[i], 
+                    component.coordinates.x + component.nodeXs[i], 
+                    component.coordinates.y + component.nodeYs[i], 
                     false, 
                     mainComponents.indexOf(component), 
                     null);
@@ -206,15 +208,25 @@ function mousePressed() {
 
         // MOVING / INTERACTING WITH COMPONENTS
 
-        if (wireCreation == false && mouseX >= component.x + cameraCoords.x && mouseX <= component.x + component.width + cameraCoords.x && mouseY >= component.y + cameraCoords.y && mouseY <= component.y + component.height + cameraCoords.y) {
+        if (wireCreation == false && mouseX >= component.coordinates.x + cameraCoords.x && mouseX <= component.coordinates.x + component.width + cameraCoords.x && mouseY >= component.coordinates.y + cameraCoords.y && mouseY <= component.coordinates.y + component.height + cameraCoords.y) {
             // Displacement of cursor from component's coordinates (top-left)
-            movingOffsetX = mouseX - component.x - cameraCoords.x;
-            movingOffsetY = mouseY - component.y - cameraCoords.y;
+            movingOffsetX = mouseX - component.coordinates.x - cameraCoords.x;
+            movingOffsetY = mouseY - component.coordinates.y - cameraCoords.y;
 
             // // Index of component being moved
             movingIndex = mainComponents.indexOf(component);
 
             component.switchChangeState();
+        }
+    }
+    
+    for (let wire of wires) {
+        if (mouseX >= wire.startX + cameraCoords.x 
+            && mouseY >= wire.startY - 5 + cameraCoords.y
+            && mouseX <= wire.endX + cameraCoords.x 
+            && mouseY <= wire.endY + 5 + cameraCoords.y) {
+                console.log("Wire selected");
+                wireSelected = wires.indexOf(wire);
         }
     }
 }
@@ -225,7 +237,7 @@ function mouseDragged() {
     // If wire is being created when mouse is moved, update wire's end coordinates and draw line to mouse
     if (wireCreation == true) {
         // If the mouse is further along the x axis than the y axis, keep the ending y position the same as the starting y position and change the ending x position so that it is the mouse's x but locked to the grid.
-        if (Math.abs(mouseX - wires[wireIndex].startX) > abs(mouseY - wires[wireIndex].startY)) {
+        if (Math.abs(mouseX - wires[wireIndex].startX - cameraCoords.x) > Math.abs(mouseY - wires[wireIndex].startY - cameraCoords.y)) {
             if ((mouseX - cameraCoords.x) % boxWidth < boxWidth / 2) {
                 wires[wireIndex].endX = mouseX - ((mouseX - cameraCoords.x) % boxWidth) - cameraCoords.x;
             } else {
@@ -277,9 +289,18 @@ function mouseMoved() {
 
 // P5-defined function being called whenever the mouse wheel is scrolled. This also takes as an argument the amount that the mouse wheel has been scrolled.
 // This function will add the (normalised) amount of scrolling to the zoomValue variable to increase or decrease the zoom.
-function mouseWheel(event) {
-    if (movingIndex == -1) {
+function mouseWheel(event) { 
+    // 2000/3 is the scrolling amount of one scroll of my mouse.
+    if (movingIndex == -1 && (zoomValue - ((event.delta * 3) / 2000)) > 0.5 && (zoomValue - ((event.delta * 3) / 2000)) < 2) {
         console.log(-event.delta / (2000 / 3));
-        zoomValue += -event.delta / (2000 / 3); // 2000/3 is the scrolling amount of one scroll of my mouse.
+        zoomValue += -event.delta / (2000 / 3);
+    }
+}
+
+// P5-defined function called when a key is pressed. The variable keyCode stores the key that is pressed.
+function keyPressed() {
+    if (keyCode === DELETE && wireSelected != null) {
+        wires.splice(wireSelected, 1);
+        wireSelected = null;
     }
 }

@@ -1,8 +1,10 @@
 // General component class:
 class Component {
-    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
-        this.x = givenX;
-        this.y = givenY;
+
+    constructor(givenCoordinates, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
+        this.coordinates = givenCoordinates
+        // this.x = givenX;
+        // this.y = givenY;
         this.width = givenWidth;
         this.height = givenHeight;
         this.type = givenType;
@@ -15,16 +17,16 @@ class Component {
 }
 // Side component class (inherits from general component):
 class SideComponent extends Component {
-    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable, givenText) {
-        super(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable)
+    constructor(givenCoordinates, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable, givenText) {
+        super(givenCoordinates, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable)
         this.text = givenText;
     }
 }
 
 // Main component class (inherits from general component):
 class MainComponent extends Component {
-    constructor(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenState, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
-        super(givenX, givenY, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable);
+    constructor(givenCoordinates, givenWidth, givenHeight, givenType, givenImage, givenState, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable) {
+        super(givenCoordinates, givenWidth, givenHeight, givenType, givenImage, givenNodeXs, givenNodeYs, givenInputs, givenTruthTable);
         this.state = givenState;
     }
 
@@ -36,7 +38,7 @@ class MainComponent extends Component {
                 this.inputs[i] = "0";
                 for (let wire of wires) {
                     // If wire ends in same position as component input node and the wire's output has not been found
-                    if (wire.endX == this.x + this.nodeXs[i] && wire.endY == this.y + this.nodeYs[i] && wire.outputComponent == null) {
+                    if (wire.endX == this.coordinates.x + this.nodeXs[i] && wire.endY == this.coordinates.y + this.nodeYs[i] && wire.outputComponent == null) {
                         wire.outputComponent = mainComponents.indexOf(this);
 
                         // Change the component's inputs property to be the given combination of inputs.
@@ -81,7 +83,7 @@ class MainComponent extends Component {
             // Check if the component is an output
             for (let wire of wires) {
                 // If the wire is connected to the output's (input) node
-                if (wire.endX == this.x + this.nodeXs[0] && wire.endY == this.y + this.nodeYs[0] && wire.outputComponent == null) {
+                if (wire.endX == this.coordinates.x + this.nodeXs[0] && wire.endY == this.coordinates.y + this.nodeYs[0] && wire.outputComponent == null) {
                     wire.outputComponent = mainComponents.indexOf(this);
                     this.state = wire.state;
                     // Break as no wire can have more than one output
@@ -98,16 +100,16 @@ class MainComponent extends Component {
     moveComponent() {
         // Locks the x coordinate of the component to the x coordinate of the grid
         if ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth < boxWidth / 2) {
-            this.x = (mouseX - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.x;
+            this.coordinates.x = (mouseX - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.x;
         } else {
-            this.x = (mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.x;
+            this.coordinates.x = (mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.x;
         }
 
         // Same for y coordinate
         if ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth < boxWidth / 2) {
-            this.y = (mouseY - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.y;
+            this.coordinates.y = (mouseY - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.y;
         } else {
-            this.y = (mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.y;
+            this.coordinates.y = (mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.y;
         }
     }
 
@@ -151,4 +153,9 @@ class Wire {
             }
         }
     }
+}
+
+function gridToCanvas(coordinates) {
+    return {x: (coordinates.x * zoomValue) + cameraCoords.x,
+        y: (coordinates.y * zoomValue) + cameraCoords.y};
 }

@@ -1,6 +1,5 @@
 // P5 defined function. Called once every frame.
 function draw() {
-    // console.log(getFrameRate());
     clear();
     stroke(0);
     strokeWeight(1);
@@ -35,7 +34,7 @@ function draw() {
         for (let component of mainComponents) {
             // Checks whether the wire's inputComponent property is equivalent to the index of the component it's connected to.
             // If not, it will, if it's not connected to anything, set the index to null.
-            if (!inputFound && wire.startX == component.x + component.nodeXs[component.nodeXs.length - 1] && wire.startY == component.y + component.nodeYs[component.nodeYs.length - 1]) {
+            if (!inputFound && wire.startX == component.coordinates.x + component.nodeXs[component.nodeXs.length - 1] && wire.startY == component.coordinates.y + component.nodeYs[component.nodeYs.length - 1]) {
                 wire.inputComponent = mainComponents.indexOf(component);
                 inputFound = true;
             } else if (!inputFound) {
@@ -62,7 +61,10 @@ function draw() {
 
         // Grey if wire is off, blue if wire is on
         strokeWeight(7);
-        if (wire.state == false) {
+
+        if (wires.indexOf(wire) == wireSelected) {
+            stroke('red');
+        } else if (wire.state == false) {
             stroke(100);
         } else {
             stroke(0, 0, 255);
@@ -87,7 +89,7 @@ function draw() {
             continue; // If component is being moved, move on to next component as this will be drawn later (so that it's on top of the side board).
         }
 
-        image(component.image, component.x, component.y, component.width, component.height);
+        image(component.image, component.coordinates.x, component.coordinates.y, component.width, component.height);
     }
 
     // push() // Saves the state of what has been drawn so that the side board isn't affected by zooming/panning
@@ -99,25 +101,25 @@ function draw() {
     strokeWeight(1);
 
     line(sideBoardWidth, 0, sideBoardWidth, windowHeight); // Creates a line from top to bottom a fifth along - line(x1, y1, x2, y2);
-    fill(255);
+    fill(200);
     rect(0, 0, sideBoardWidth, windowHeight);
 
     // DRAWS SIDE COMPONENTS
     for (let component of sideComponents) {
-        image(component.image, component.x, component.y, component.width, component.height);
+        image(component.image, component.coordinates.x, component.coordinates.y, component.width, component.height);
     }
 
     if (movingIndex > -1) {
         mainComponents[movingIndex].moveComponent();
         component = mainComponents[movingIndex];
-        image(component.image, component.x + cameraCoords.x, component.y + cameraCoords.y, component.width, component.height);
+        image(component.image, component.coordinates.x + cameraCoords.x, component.coordinates.y + cameraCoords.y, component.width, component.height);
     }
 
 
     // Drawing text boxes for components
     date = new Date();
     for (let component of sideComponents) {
-        if (mouseX >= component.x && mouseX <= component.x + component.width && mouseY >= component.y && mouseY <= component.y + component.height) {
+        if (mouseX >= component.coordinates.x && mouseX <= component.coordinates.x + component.width && mouseY >= component.coordinates.y && mouseY <= component.coordinates.y + component.height) {
             if (date.getTime() - timeHover >= 1000) {
                 fill(255);
                 stroke(0);
