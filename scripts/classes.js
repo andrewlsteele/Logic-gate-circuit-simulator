@@ -146,6 +146,12 @@ class Wire {
             let temp = this.startX; // If it is, swaps them
             this.startX = this.endX;
             this.endX = temp;
+            
+            // ...and for the y-coordinate...
+            temp = this.startY;
+            this.startY = this.endY;
+            this.endY = temp;
+
             if (this.inputComponent != null && this.outputComponent != null) { // Checks if the wire's been connected between two components
                 let temp = this.inputComponent; // If it has, swaps the input and output component indices
                 this.inputComponent = this.outputComponent;

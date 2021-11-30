@@ -70,6 +70,8 @@ function draw() {
             stroke(0, 0, 255);
         }
 
+        line(wire.startX, wire.startY, wire.startX + (wire.endX - wire.startX)/2, wire.startY);
+        line()
         line(wire.startX, wire.startY, wire.endX, wire.endY);
     }
 

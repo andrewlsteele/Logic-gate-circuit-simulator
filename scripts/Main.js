@@ -220,13 +220,25 @@ function mousePressed() {
         }
     }
     
-    for (let wire of wires) {
-        if (mouseX >= wire.startX + cameraCoords.x 
-            && mouseY >= wire.startY - 5 + cameraCoords.y
-            && mouseX <= wire.endX + cameraCoords.x 
-            && mouseY <= wire.endY + 5 + cameraCoords.y) {
-                console.log("Wire selected");
-                wireSelected = wires.indexOf(wire);
+    if (wireCreation == false) {
+        for (let wire of wires) {
+            if (wire.endY >= wire.startY) {
+                if (mouseX >= wire.startX + cameraCoords.x 
+                    && mouseY >= wire.startY - 5 + cameraCoords.y
+                    && mouseX <= wire.endX + cameraCoords.x 
+                    && mouseY <= wire.endY + 5 + cameraCoords.y) {
+                        console.log("Wire selected");
+                        wireSelected = wires.indexOf(wire);
+                }
+            } else {
+                if (mouseX >= wire.startX + cameraCoords.x 
+                    && mouseY <= wire.startY + 5 + cameraCoords.y
+                    && mouseX <= wire.endX + cameraCoords.x 
+                    && mouseY >= wire.endY - 5 + cameraCoords.y) {
+                        console.log("Wire selected");
+                        wireSelected = wires.indexOf(wire);
+                }
+            }
         }
     }
 }
@@ -236,21 +248,17 @@ function mouseDragged() {
 
     // If wire is being created when mouse is moved, update wire's end coordinates and draw line to mouse
     if (wireCreation == true) {
-        // If the mouse is further along the x axis than the y axis, keep the ending y position the same as the starting y position and change the ending x position so that it is the mouse's x but locked to the grid.
-        if (Math.abs(mouseX - wires[wireIndex].startX - cameraCoords.x) > Math.abs(mouseY - wires[wireIndex].startY - cameraCoords.y)) {
-            if ((mouseX - cameraCoords.x) % boxWidth < boxWidth / 2) {
-                wires[wireIndex].endX = mouseX - ((mouseX - cameraCoords.x) % boxWidth) - cameraCoords.x;
-            } else {
-                wires[wireIndex].endX = mouseX + boxWidth - ((mouseX - cameraCoords.x) % boxWidth) - cameraCoords.x;
-            }
-            wires[wireIndex].endY = wires[wireIndex].startY;
+
+        if ((mouseX - cameraCoords.x) % boxWidth < boxWidth / 2) {
+            wires[wireIndex].endX = mouseX - ((mouseX - cameraCoords.x) % boxWidth) - cameraCoords.x;
         } else {
-            if (mouseY % boxWidth < boxWidth / 2) {
-                wires[wireIndex].endY = mouseY - (mouseY % boxWidth) - cameraCoords.y;
-            } else {
-                wires[wireIndex].endY = mouseY + boxWidth - (mouseY % boxWidth) - cameraCoords.y;
-            }
-            wires[wireIndex].endX = wires[wireIndex].startX;
+            wires[wireIndex].endX = mouseX + boxWidth - ((mouseX - cameraCoords.x) % boxWidth) - cameraCoords.x;
+        }
+
+        if ((mouseY - cameraCoords.y) % boxWidth < boxWidth / 2) {
+            wires[wireIndex].endY = mouseY - ((mouseY - cameraCoords.y) % boxWidth) - cameraCoords.y;
+        } else {
+            wires[wireIndex].endY = mouseY + boxWidth - ((mouseY - cameraCoords.y) % boxWidth) - cameraCoords.y;
         }
     }
 
