@@ -5,23 +5,23 @@ function draw() {
     strokeWeight(1);
 
     translate(cameraCoords.x, cameraCoords.y); // Translates the camera to the coordinates given
-    scale(zoomValue); // Scales the camera depending on the zoom multiplier (given by how much the user has scrolled)
+    // scale(zoomValue); // Scales the camera depending on the zoom multiplier (given by how much the user has scrolled)
 
     // Draws grid
     // Vertical
-    for (let i = 0; i < (windowWidth - cameraCoords.x) / (boxWidth*zoomValue); i++) {
-        line(i * boxWidth * zoomValue, windowHeight - cameraCoords.y, i * boxWidth * zoomValue, -cameraCoords.y);
+    for (let i = 0; i < (windowWidth - cameraCoords.x) / (boxWidth); i++) {
+        line(i * boxWidth, windowHeight - cameraCoords.y, i * boxWidth, -cameraCoords.y);
     }
     // Horizontal
-    for (let i = 0; i < (windowHeight - cameraCoords.y) / (boxWidth*zoomValue); i++) {
-        line(-cameraCoords.x, i * boxWidth * zoomValue, windowWidth - cameraCoords.x, i * boxWidth * zoomValue);
+    for (let i = 0; i < (windowHeight - cameraCoords.y) / boxWidth; i++) {
+        line(-cameraCoords.x, i * boxWidth, windowWidth - cameraCoords.x, i * boxWidth);
     }
 
-    for (let i = -1; i > (-cameraCoords.x) / (boxWidth*zoomValue); i--) {
-        line(i * boxWidth * zoomValue, windowHeight - cameraCoords.y, i * boxWidth * zoomValue, -cameraCoords.y);
+    for (let i = -1; i > (-cameraCoords.x) / boxWidth; i--) {
+        line(i * boxWidth, windowHeight - cameraCoords.y, i * boxWidth, -cameraCoords.y);
     }
-    for (let i = -1; i > (-cameraCoords.y) / (boxWidth*zoomValue); i--) {
-        line(-cameraCoords.x, i * boxWidth * zoomValue, windowWidth - cameraCoords.x, i * boxWidth * zoomValue);
+    for (let i = -1; i > (-cameraCoords.y) / boxWidth; i--) {
+        line(-cameraCoords.x, i * boxWidth, windowWidth - cameraCoords.x, i * boxWidth);
     }
 
     // DRAWS THE WIRES
@@ -70,9 +70,13 @@ function draw() {
             stroke(0, 0, 255);
         }
 
-        line(wire.startX, wire.startY, wire.startX + (wire.endX - wire.startX)/2, wire.startY);
-        line()
-        line(wire.startX, wire.startY, wire.endX, wire.endY);
+        if (wireMode == "grid") {
+            line(wire.startX, wire.startY, Math.floor((wire.endX + wire.startX)/2), wire.startY);
+            line(Math.floor((wire.endX + wire.startX)/2), wire.startY, Math.floor((wire.endX + wire.startX)/2), wire.endY);
+            line(Math.floor((wire.endX + wire.startX)/2), wire.endY, wire.endX, wire.endY);
+        } else if (wireMode == "straight") {
+            line(wire.startX, wire.startY, wire.endX, wire.endY);
+        }
     }
 
     // DRAWS MAIN COMPONENTS
@@ -95,7 +99,7 @@ function draw() {
     }
 
     // push() // Saves the state of what has been drawn so that the side board isn't affected by zooming/panning
-    scale(1/zoomValue);
+    scale(1);
     translate(-cameraCoords.x, -cameraCoords.y);
 
     // Draws the side board
@@ -134,4 +138,13 @@ function draw() {
             }
         }
     }
+
+    // Draw text for controls
+    fill(0);
+    textAlign(LEFT, TOP);
+    stroke(0);
+    textSize(32);
+    text("DEL = delete selected wire", window.width - 400, 5);
+    text("1 = straight wire mode", window.width - 400, 50);
+    text("2 = grid wire mode", window.width - 400, 105);
 }

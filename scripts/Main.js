@@ -15,7 +15,8 @@ const nodeRadius = 30 * (boxWidth / 100);
 
 let sideBoardWidth, imgSwitchOn, imgSwitchOff, imgOutputOn, imgOutputOff, imgANDGate, imgORGate, imgNOTGate;
 let sideComponents, movingOffsetX, movingOffsetY, wire, wireIndex, timeHover, date, cameraCoords, wireSelected;
-let zoomValue = 1;
+let wireMode = "straight";
+// let zoomValue = 1;
 let movingIndex = -1;
 let wireCreation = false;
 let logicFlag = false;
@@ -41,7 +42,7 @@ function preload() {
 function setup() {
     createCanvas(windowWidth, windowHeight, P2D); // Third parameter (P2D) is renderer, in this case P5's 2D renderer
     frameRate(60);
-    sideBoardWidth = windowWidth / 5;
+    sideBoardWidth = windowWidth / 10;
     cameraCoords = { x: Math.floor(sideBoardWidth), y: 0 }; // Stores the coordinates of the camera
 
     // Array of side components. Components' nodes' coordinates are relative to the coordinates of the component.
@@ -123,7 +124,7 @@ function setup() {
 // P5 defined function. Called every time user's window is resized
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
-    sideBoardWidth = windowWidth / 5;
+    sideBoardWidth = windowWidth / 10;
     for (let component of sideComponents) {
         component.coordinates.x = ((sideBoardWidth - (component.width)) / 2);
     }
@@ -139,7 +140,6 @@ function mousePressed() {
     console.log("Camera coordinates: ", cameraCoords);
     mainComponents.forEach(component => {
         console.log("Main component coordinates: ", mainComponents[0].coordinates);
-        console.log("Predicted main component coordinates: ", gridToCanvas(mainComponents[0].coordinates))
     });
 
     for (let component of sideComponents) {
@@ -297,18 +297,25 @@ function mouseMoved() {
 
 // P5-defined function being called whenever the mouse wheel is scrolled. This also takes as an argument the amount that the mouse wheel has been scrolled.
 // This function will add the (normalised) amount of scrolling to the zoomValue variable to increase or decrease the zoom.
-function mouseWheel(event) { 
-    // 2000/3 is the scrolling amount of one scroll of my mouse.
-    if (movingIndex == -1 && (zoomValue - ((event.delta * 3) / 2000)) > 0.5 && (zoomValue - ((event.delta * 3) / 2000)) < 2) {
-        console.log(-event.delta / (2000 / 3));
-        zoomValue += -event.delta / (2000 / 3);
-    }
-}
+// function mouseWheel(event) { 
+//     // 2000/3 is the scrolling amount of one scroll of my mouse.
+//     if (movingIndex == -1 && (zoomValue - ((event.delta * 3) / 2000)) > 0.5 && (zoomValue - ((event.delta * 3) / 2000)) < 2) {
+//         console.log(-event.delta / (2000 / 3));
+//         zoomValue += -event.delta / (2000 / 3);
+//     }
+// }
 
 // P5-defined function called when a key is pressed. The variable keyCode stores the key that is pressed.
 function keyPressed() {
     if (keyCode === DELETE && wireSelected != null) {
         wires.splice(wireSelected, 1);
         wireSelected = null;
+    }
+
+    if (keyCode === 49) {
+        wireMode = "straight";
+    }
+    if (keyCode === 50) {
+        wireMode = "grid";
     }
 }

@@ -100,16 +100,16 @@ class MainComponent extends Component {
     moveComponent() {
         // Locks the x coordinate of the component to the x coordinate of the grid
         if ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth < boxWidth / 2) {
-            this.coordinates.x = (mouseX - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.x;
+            this.coordinates.x = mouseX - movingOffsetX - (mouseX - movingOffsetX - cameraCoords.x) % boxWidth - nodeRadius - cameraCoords.x;
         } else {
-            this.coordinates.x = (mouseX + boxWidth - movingOffsetX - ((mouseX - movingOffsetX - cameraCoords.x) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.x;
+            this.coordinates.x = mouseX + boxWidth - movingOffsetX - (mouseX - movingOffsetX - cameraCoords.x) % boxWidth - nodeRadius - cameraCoords.x;
         }
 
         // Same for y coordinate
         if ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth < boxWidth / 2) {
-            this.coordinates.y = (mouseY - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.y;
+            this.coordinates.y = mouseY - movingOffsetY - (mouseY - movingOffsetY - cameraCoords.y) % boxWidth - nodeRadius - cameraCoords.y;
         } else {
-            this.coordinates.y = (mouseY + boxWidth - movingOffsetY - ((mouseY - movingOffsetY - cameraCoords.y) % boxWidth) - nodeRadius) / zoomValue - cameraCoords.y;
+            this.coordinates.y = mouseY + boxWidth - movingOffsetY - (mouseY - movingOffsetY - cameraCoords.y) % boxWidth - nodeRadius - cameraCoords.y;
         }
     }
 
@@ -159,9 +159,4 @@ class Wire {
             }
         }
     }
-}
-
-function gridToCanvas(coordinates) {
-    return {x: (coordinates.x * zoomValue) + cameraCoords.x,
-        y: (coordinates.y * zoomValue) + cameraCoords.y};
 }
